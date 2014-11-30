@@ -1,0 +1,7 @@
+LIBPAPI_DIR = /home/dragojev/local64
+ATOMIC_OPS_INCLUDE = /Users/aleksandar/local
+
+SOLARIS_CPP = /home/dragojev/local/gcc/bin/g++
+SOLARIS_CC = /home/dragojev/local/gcc/bin/gcc
+
+MFLAGS = -j2

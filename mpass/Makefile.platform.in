@@ -1,0 +1,155 @@
+########################################
+# set general variables
+GNU_CPP = g++
+GNU_CC = gcc
+
+INTEL_CPP = icpc
+INTEL_CC = icc
+
+AR = ar
+
+########################################
+# set the compiler
+ifeq ($(COMPILER), )
+	COMPILER = gnu
+endif
+
+ifeq ($(COMPILER), gnu)
+	CC = $(GNU_CC)
+	CPP = $(GNU_CPP)
+endif
+
+ifeq ($(COMPILER), intel)
+	CC = $(INTEL_CC)
+	CPP = $(INTEL_CPP)
+endif
+
+########################################
+# set platform specific variables
+OS_NAME = $(shell uname -s)
+
+ifeq ($(OS_NAME), Darwin)
+    OS = MacOS
+endif
+
+ifeq ($(OS_NAME), Linux)
+    OS = Linux
+endif
+
+ifeq ($(OS_NAME), SunOS)
+    OS = Solaris
+endif
+
+ifeq ($(OS), MacOS)
+    CCFLAGS += -D $(PROJECT_NAME)_MACOS -pthread
+    LDFLAGS += -pthread -framework CoreServices
+endif
+
+ifeq ($(OS), Linux)
+    CCFLAGS += -D $(PROJECT_NAME)_LINUXOS -pthread
+    LDFLAGS += -lrt -pthread
+endif
+
+# override the compiler too
+ifeq ($(OS), Solaris)
+    CCFLAGS += -D $(PROJECT_NAME)_SOLARIS -mt
+    LDFLAGS += -lrt -mt
+	CPP = $(SOLARIS_CPP)
+	CC = $(SOLARIS_CC)
+endif
+
+########################################
+# set architecture specific flags
+ifeq ($(ARCH), )
+    ARCH_NAME = $(shell uname -m)
+endif
+
+ifeq ($(ARCH_NAME), i386)
+    ARCH = x86
+endif
+
+ifeq ($(ARCH_NAME), i686)
+    ARCH = x86
+endif
+
+ifeq ($(ARCH_NAME), x86_64)
+    ARCH = x86_64
+endif
+
+ifeq ($(ARCH_NAME), sun4v)
+    ARCH = sparc64
+endif
+
+ifeq ($(ARCH), x86)
+    CCFLAGS += -D $(PROJECT_NAME)_X86 -D $(PROJECT_NAME)_32
+endif
+
+ifeq ($(ARCH), x86_64)
+    CCFLAGS += -D $(PROJECT_NAME)_X86 -D $(PROJECT_NAME)_64
+endif
+
+ifeq ($(ARCH), sparc64)
+    CCFLAGS += -D $(PROJECT_NAME)_SPARC -D $(PROJECT_NAME)_64 -m64
+	LDFLAGS += -m64
+endif
+
+########################################
+# set CPU specific flags
+ifeq ($(CPU), )
+ifeq ($(OS), Solaris)
+	CPU_NAME = $(shell uname -i)
+endif
+endif
+
+ifeq ($(CPU_NAME), SUNW,SPARC-Enterprise-T5120)
+	CPU = niagara2
+endif
+
+ifeq ($(CPU), niagara2)
+	CCFLAGS += -D $(PROJECT_NAME)_NIAGARA2
+endif
+
+########################################
+# does the machine support unaligned accesses?
+ifeq ($(UNALIGNED_ACCESSES), )
+    UNALIGNED_ACCESSES = yes
+endif
+
+ifeq ($(ARCH), x86)
+    UNALIGNED_ACCESSES = yes
+endif
+
+ifeq ($(ARCH), x86_64)
+    UNALIGNED_ACCESSES = yes
+endif
+
+ifeq ($(ARCH), sparc64)
+    UNALIGNED_ACCESSES = no
+endif
+
+ifeq ($(UNALIGNED_ACCESSES), yes)
+	CCFLAGS += -D ALLOW_UNALIGNED_ACCESSES
+endif
+
+########################################
+# select tls implementation
+TLS_CCFLAGS_pthread = -D USE_PTHREAD_TLS
+
+TLS_CCFLAGS_gcc = -D USE_GCC_TLS
+
+ifeq ($(TLS), )
+    ifeq ($(OS), MacOS)
+        TLS = pthread
+    endif
+
+    ifeq ($(OS), LinuxOS)
+        TLS = gcc
+    endif
+
+    ifeq ($(OS), Solaris)
+        TLS = gcc
+    endif
+endif
+
+CCFLAGS += $(TLS_CCFLAGS_${TLS})
+

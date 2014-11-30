@@ -1,0 +1,46 @@
+PROJECT_NAME = MPASS
+
+CCFLAGS  = "-g"
+CPPFLAGS = "-g"
+LDFLAGS  =
+
+include Makefile.machine.in
+include Makefile.platform.in
+
+########################################
+# set compiler and linker options
+CCFLAGS += -Wall -I$(ATOMIC_OPS_INCLUDE) -fno-strict-aliasing
+CPPFLAGS += -fno-exceptions -nostdinc++
+
+ifeq ($(COMPILER), gnu)
+	CPPFLAGS += -fno-threadsafe-statics
+endif
+
+ifeq ($(COMPILER), intel)
+	CCFLAGS += -wd981 -wd522 -wd181 -wd869 -wd111 -wd1599 -wd1418
+endif
+
+# dirs to use
+SRC_DIR = ./src
+TARGET_DIR = ./target
+OBJ_DIR = $(TARGET_DIR)/obj
+
+########################################
+# set the build profile (default=normal)
+CCFLAGS_normal  =  -ggdb -O3
+CCFLAGS_fast    =  -DNDEBUG -O3
+CCFLAGS_debug   =  -g -O0
+CCFLAGS_gp0     =  -ggdb -pg -O0
+CCFLAGS_gp      =  -ggdb -pg -O3
+
+ifeq ($(PROFILE), )
+	ifeq ($(COMPILER), gnu)
+		PROFILE = fast
+	endif
+
+	ifeq ($(COMPILER), intel)
+		PROFILE = normal
+	endif
+endif
+
+CCFLAGS += $(CCFLAGS_${PROFILE})
